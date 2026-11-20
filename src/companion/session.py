@@ -71,7 +71,7 @@ def chat_loop(console: Console, jelly_name: str, mood: str) -> None:
 def run_companion_session() -> None:
     """Run interactive terminal companion loop."""
     # Force UTF-8 for emoji support on Windows
-    console = Console(theme=get_theme(), encoding="utf-8")
+    console = Console(theme=get_theme())
     catalog = load_cosmetics_catalog()
     crown = catalog.get("crown")
 
