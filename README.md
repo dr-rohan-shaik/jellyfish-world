@@ -55,6 +55,41 @@ jelly autostart on
 
 ---
 
+## 🪼 Continuous Drift Mode (24/7 Display)
+
+Run your jellyfish continuously below the line while working:
+
+```powershell
+# Run indefinitely (perfect for agent work)
+jelly drift
+
+# With custom interval
+jelly drift --interval 0.3
+
+# Force compact 40x20 viewport
+jelly drift --compact
+```
+
+The `--silent` mode in `jelly home` also works for non-interactive display:
+
+```powershell
+jelly home --silent
+```
+
+---
+
+## 👨‍💻 Git Push Integration
+
+Commit and push with a calm message:
+
+```powershell
+jelly gitpush
+jelly gitpush -m "Your custom message"
+jelly gitpush -y    # Skip confirmation
+```
+
+---
+
 ## 🧪 Test Suite
 
 Run all automated unit tests:
