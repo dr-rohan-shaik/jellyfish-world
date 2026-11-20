@@ -78,18 +78,6 @@ jelly home --silent
 
 ---
 
-## 👨‍💻 Git Push Integration
-
-Commit and push with a calm message:
-
-```powershell
-jelly gitpush
-jelly gitpush -m "Your custom message"
-jelly gitpush -y    # Skip confirmation
-```
-
----
-
 ## 🧪 Test Suite
 
 Run all automated unit tests:
