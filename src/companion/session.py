@@ -189,8 +189,13 @@ def run_companion_session() -> None:
             input("Press Enter to continue...")
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Main entry point for the jellyfish command."""
     if len(sys.argv) > 1:
         handle_direct_message(sys.argv[1:])
     else:
         run_companion_session()
+
+
+if __name__ == "__main__":
+    main()
