@@ -137,12 +137,6 @@ def run_companion_session() -> None:
         elif choice == "1":
             chat_loop(console, STATE["name"], STATE["mood"])
 
-        # 2. Watch Other Agents
-        elif choice == "2":
-            table = render_agent_watcher_table()
-            console.print(table)
-            console.print("\n[dim]External agents (Claude Code, OpenCode, Hermes, DeepSeek) report here via MCP.[/dim]")
-            input("\nPress Enter to return to menu...")
 
         # 3. Work Options & Decisions
         elif choice == "3":
