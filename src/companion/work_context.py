@@ -5,13 +5,12 @@ and formulates 3 gentle, pressure-free options for the owner.
 """
 from __future__ import annotations
 
-import os
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any
 
 
-def get_git_status_summary(cwd: Optional[Path] = None) -> Dict[str, Any]:
+def get_git_status_summary(cwd: Path | None = None) -> dict[str, Any]:
     """Inspect git repository status in the current working directory."""
     if cwd is None:
         cwd = Path.cwd()
@@ -47,14 +46,14 @@ def get_git_status_summary(cwd: Optional[Path] = None) -> Dict[str, Any]:
         if res_status.returncode == 0:
             lines = [line.strip() for line in res_status.stdout.splitlines() if line.strip()]
             summary["modified_count"] = len(lines)
-            summary["recent_files"] = [l.split()[-1] for l in lines[:5]]
+            summary["recent_files"] = [line.split()[-1] for line in lines[:5]]
     except Exception:
         pass
 
     return summary
 
 
-def generate_work_options(cwd: Optional[Path] = None) -> List[Dict[str, str]]:
+def generate_work_options(cwd: Path | None = None) -> list[dict[str, str]]:
     """Produce 3 calm options for the owner based on current work."""
     git_info = get_git_status_summary(cwd)
     branch = git_info["branch"] or "main"

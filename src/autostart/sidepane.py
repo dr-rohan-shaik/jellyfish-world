@@ -8,7 +8,6 @@ from __future__ import annotations
 import shutil
 import subprocess
 import sys
-from typing import Tuple
 
 
 def is_windows_terminal_available() -> bool:
@@ -16,7 +15,7 @@ def is_windows_terminal_available() -> bool:
     return shutil.which("wt.exe") is not None or shutil.which("wt") is not None
 
 
-def open_sidepane(python_path: str, cli_path: str, width_fraction: float = 0.35) -> Tuple[bool, str]:
+def open_sidepane(python_path: str, cli_path: str, width_fraction: float = 0.35) -> tuple[bool, str]:
     """Launch a vertical split pane in Windows Terminal running `jelly home`."""
     if sys.platform != "win32":
         return False, "Sidepane requires Windows Terminal on Windows."

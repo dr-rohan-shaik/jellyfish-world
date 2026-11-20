@@ -10,27 +10,26 @@ Showcases:
 from __future__ import annotations
 
 import argparse
-import os
 import shutil
-import sys
 import time
-from pathlib import Path
+from typing import Any
 
-# Ensure project root is in sys.path for direct execution
-_repo_root = str(Path(__file__).resolve().parent.parent.parent)
-if _repo_root not in sys.path:
-    sys.path.insert(0, _repo_root)
+# ruff: noqa: I001
+# Bootstrap must be imported first to ensure project root is on sys.path
+import src.bootstrap  # noqa: F401
 
-from rich.console import Console
-from rich.live import Live
-from rich.layout import Layout
-from rich.panel import Panel
-from rich.text import Text
 from rich.align import Align
+from rich.console import Console
+from rich.layout import Layout
+from rich.live import Live
+from rich.text import Text
 
 from src.core.cosmetics import load_cosmetics_catalog
 from src.ui.ascii_art import render_jellyfish_card
 from src.ui.palette import Palette, get_theme
+
+
+DemoConfig = dict[str, Any]
 
 
 def run_preview(
@@ -38,7 +37,7 @@ def run_preview(
     interval: float = 0.25,
     force_compact: bool = False,
     founder_demo: bool = True,
-):
+) -> None:
     """Run interactive design preview."""
     console = Console(theme=get_theme())
     catalog = load_cosmetics_catalog()
@@ -48,7 +47,7 @@ def run_preview(
     ring = catalog.get("glow_ring")
 
     # Sequence of demo configurations to rotate through
-    demos = [
+    demos: list[DemoConfig] = [
         {"name": "Aurelia", "num": 1, "founder": True, "mood": "calm", "items": [], "desc": "Bare Founder (#00001, Gold Glow)"},
         {"name": "Aurelia", "num": 1, "founder": True, "mood": "sparkle", "items": [crown] if crown else [], "desc": "Founder with Golden Crown"},
         {"name": "Corallia", "num": 47, "founder": False, "mood": "curious", "items": [glasses] if glasses else [], "desc": "Curious (#00047) with Round Glasses"},
@@ -70,10 +69,10 @@ def run_preview(
                     speech = f"Softly drifting in the deep... [{curr['desc']}]"
                     card = render_jellyfish_card(
                         frame_idx=frame_idx,
-                        name=curr["name"],
-                        number=curr["num"],
-                        mood=curr["mood"],
-                        is_founder=curr["founder"],
+                        name=str(curr["name"]),
+                        number=int(curr["num"]),
+                        mood=str(curr["mood"]),
+                        is_founder=bool(curr["founder"]),
                         equipped=[i for i in curr["items"] if i is not None],
                         speech=speech,
                         hint="hey jellyfish how are you?",
@@ -108,7 +107,7 @@ def run_preview(
     console.print("\n[bold cyan]Preview concluded peacefully.[/bold cyan]\n")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Jellyfish World Design Preview")
     parser.add_argument("--cycles", type=int, default=0, help="Number of animation cycles to run before exiting (0 = infinite)")
     parser.add_argument("--interval", type=float, default=0.25, help="Seconds per frame (default: 0.25)")

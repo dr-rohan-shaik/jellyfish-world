@@ -8,7 +8,6 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional
 
 
 @dataclass
@@ -19,9 +18,9 @@ class CosmeticItem:
     slot: str  # 'hat', 'glasses', 'glow_ring'
     description: str
     item_type: str  # 'hat_layer', 'eye_layer', 'ring_layer'
-    line: Optional[str] = None
-    replacements: Dict[str, str] = field(default_factory=dict)
-    rim_brackets: List[str] = field(default_factory=list)
+    line: str | None = None
+    replacements: dict[str, str] = field(default_factory=dict)
+    rim_brackets: list[str] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, data: dict) -> CosmeticItem:
@@ -37,19 +36,19 @@ class CosmeticItem:
         )
 
 
-def load_cosmetics_catalog(cosmetics_dir: Optional[Path] = None) -> Dict[str, CosmeticItem]:
+def load_cosmetics_catalog(cosmetics_dir: Path | None = None) -> dict[str, CosmeticItem]:
     """Load all cosmetic item definitions from the data directory."""
     if cosmetics_dir is None:
         # Default to repo root / data / cosmetics
         cosmetics_dir = Path(__file__).resolve().parent.parent.parent / "data" / "cosmetics"
 
-    catalog: Dict[str, CosmeticItem] = {}
+    catalog: dict[str, CosmeticItem] = {}
     if not cosmetics_dir.exists():
         return catalog
 
     for file_path in cosmetics_dir.glob("*.json"):
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
                 item = CosmeticItem.from_dict(data)
                 catalog[item.id] = item
@@ -59,10 +58,10 @@ def load_cosmetics_catalog(cosmetics_dir: Optional[Path] = None) -> Dict[str, Co
 
 
 def apply_cosmetics_to_frame(
-    frame_lines: List[str],
-    equipped_items: List[CosmeticItem],
+    frame_lines: list[str],
+    equipped_items: list[CosmeticItem],
     target_width: int = 21,
-) -> List[str]:
+) -> list[str]:
     """Composite equipped cosmetics onto a jellyfish ASCII frame.
 
     Args:

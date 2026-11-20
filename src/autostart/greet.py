@@ -4,25 +4,20 @@ Performance constraints:
 - Uses ONLY Python standard library (no torch, transformers, httpx, or heavy imports).
 - Starts execution in < 50ms.
 - Maximum duration: 2.5 - 3.0 seconds.
-- Instantly skippable upon any keypress (via msvcrt.kbhit on Windows).
+- Instantly skippable upon any keypress (via msvcrt.kbhit on Windows, select on Unix).
 - Cleanly returns control to the shell prompt.
 """
 from __future__ import annotations
 
 import os
+import select
 import sys
 import time
-from typing import List
-
-# Ensure project root is in sys.path
-_repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if _repo_root not in sys.path:
-    sys.path.insert(0, _repo_root)
 
 from src.autostart.guards import (
-    should_suppress_greeting,
-    mark_seen,
     is_quiet_mode,
+    mark_seen,
+    should_suppress_greeting,
 )
 
 # Standard ANSI colors (only applied if NO_COLOR is not set)
@@ -56,11 +51,20 @@ def check_keypress() -> bool:
                 return True
         except Exception:
             pass
+    else:
+        # Unix: use select to check if stdin has data ready
+        try:
+            if select.select([sys.stdin], [], [], 0)[0]:
+                # Consume the input
+                sys.stdin.read(1)
+                return True
+        except Exception:
+            pass
     return False
 
 
 # 4 lightweight frames (6 lines each)
-FRAMES: List[List[str]] = [
+FRAMES: list[list[str]] = [
     [
         "     .-~~~-.     ",
         "    /  o o  \\    ",
@@ -96,7 +100,7 @@ FRAMES: List[List[str]] = [
 ]
 
 
-def render_greet_frame(frame: List[str], no_color: bool) -> str:
+def render_greet_frame(frame: list[str], no_color: bool) -> str:
     """Style and format a single frame string."""
     out = []
     for line in frame:

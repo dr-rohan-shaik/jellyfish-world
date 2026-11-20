@@ -1,8 +1,6 @@
 """Unit tests for Smart Conversational & Decision Engine."""
-import pytest
-from src.ai.decision_engine import is_decision_query, extract_options, decide_choice
-from src.ai.semantic_engine import generate_semantic_reply
 from src.ai.adapter import query_jellyfish_ai
+from src.ai.decision_engine import decide_choice, extract_options, is_decision_query
 
 
 def test_decision_query_detection():

@@ -10,16 +10,14 @@ Always creates a timestamped backup before writing.
 from __future__ import annotations
 
 import datetime
-import os
 import shutil
 from pathlib import Path
-from typing import List, Optional, Tuple
 
 START_MARKER = "# >>> jellyfish"
 END_MARKER = "# <<< jellyfish"
 
 
-def get_default_profile_paths() -> List[Path]:
+def get_default_profile_paths() -> list[Path]:
     """Return common user PowerShell profile locations (User scope only)."""
     user_home = Path.home()
     documents = user_home / "Documents"
@@ -93,7 +91,7 @@ def remove_block(content: str) -> str:
     return ""
 
 
-def backup_profile(profile_path: Path) -> Optional[Path]:
+def backup_profile(profile_path: Path) -> Path | None:
     """Create a timestamped backup of the profile."""
     if not profile_path.exists():
         return None
@@ -108,7 +106,7 @@ def apply_powershell_autostart(
     profile_path: Path,
     python_path: str,
     cli_path: str,
-) -> Tuple[bool, str, Optional[Path]]:
+) -> tuple[bool, str, Path | None]:
     """Inject autostart block into profile with automatic backup."""
     backup_path = None
     if profile_path.exists():
@@ -125,7 +123,7 @@ def apply_powershell_autostart(
 
 def remove_powershell_autostart(
     profile_path: Path,
-) -> Tuple[bool, str, Optional[Path]]:
+) -> tuple[bool, str, Path | None]:
     """Remove autostart block from profile with automatic backup."""
     if not profile_path.exists():
         return False, "Profile does not exist", None

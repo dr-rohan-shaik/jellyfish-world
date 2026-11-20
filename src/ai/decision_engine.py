@@ -7,18 +7,16 @@ from __future__ import annotations
 
 import hashlib
 import re
-from typing import List, Optional, Tuple
 
 
 def is_decision_query(text: str) -> bool:
     """Determine if a user message is asking the jellyfish to make a decision."""
     lower = text.lower().strip()
 
-    # Explicit decision keywords
+    # Explicit decision keywords - must be clear decision requests
     explicit_triggers = [
         "decide", "choose", "pick", "should i", "which one",
-        "which is better", " vs ", " versus ", "or should",
-        "preference between",
+        "which is better", "preference between",
     ]
     if any(w in lower for w in explicit_triggers):
         return True
@@ -28,16 +26,36 @@ def is_decision_query(text: str) -> bool:
     if any(it in lower for it in info_triggers):
         return False
 
-    # Short choices like "tea or coffee", "chicken, fish"
-    if "," in lower and len(lower.split(",")) <= 5 and not lower.endswith("?"):
-        return True
-    if " or " in lower and len(lower.split()) <= 8:
-        return True
+    # Check for " vs " or " versus " - these are clear comparison requests
+    if " vs " in lower or " versus " in lower:
+        # But exclude common phrases like "pros vs cons" without a decision context
+        words = lower.split()
+        if len(words) <= 10:  # Short comparisons are likely decisions
+            return True
+
+    # Short choices like "tea or coffee" - must be very short and clear
+    if " or " in lower:
+        words = lower.split()
+        # Only trigger for very short, clear choice requests (3-6 words typical)
+        if 3 <= len(words) <= 6:
+            # Exclude conversational "or" usage
+            if not any(w in lower for w in ["maybe", "perhaps", "could", "would", "might", "think", "feel"]):
+                return True
+
+    # Comma-separated options only if it looks like a list of alternatives
+    # and doesn't look like a sentence fragment
+    if "," in lower:
+        parts = [p.strip() for p in lower.split(",") if p.strip()]
+        if 2 <= len(parts) <= 4:
+            # Check if each part is a simple noun phrase (not a full clause)
+            all_simple = all(len(p.split()) <= 3 for p in parts)
+            if all_simple and not lower.endswith("?"):
+                return True
 
     return False
 
 
-def extract_options(text: str) -> List[str]:
+def extract_options(text: str) -> list[str]:
     """Extract candidate options from natural language text."""
     lower = text.lower()
 
@@ -86,10 +104,10 @@ def extract_options(text: str) -> List[str]:
 
 def decide_choice(
     situation: str,
-    options: List[str],
+    options: list[str],
     jellyfish_name: str = "Aurelia",
     mood: str = "calm",
-) -> Tuple[str, float, str]:
+) -> tuple[str, float, str]:
     """Evaluate options and pick one calmly.
 
     Returns:
@@ -102,9 +120,11 @@ def decide_choice(
         return options[0], 0.95, f"Only {options[0]} floats before us. Trust the current and proceed."
 
     # Deterministic scoring based on seed hash of the situation and options
+    # Use full option text in hash to avoid collisions between different situations
     scores = []
-    for i, opt in enumerate(options):
-        h = int(hashlib.sha256(f"{situation}:{opt}:{i}".encode()).hexdigest(), 16)
+    for opt in options:
+        # Hash includes full option text and situation for uniqueness
+        h = int(hashlib.sha256(f"{situation}:{opt}".encode()).hexdigest(), 16)
         score = (h % 100) + 1
         scores.append(score)
 

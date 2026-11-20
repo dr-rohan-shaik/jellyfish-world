@@ -1,13 +1,14 @@
 """Unit tests for PowerShell profile injection, backup, and clean removal."""
 from pathlib import Path
+
 from src.autostart.powershell import (
-    START_MARKER,
     END_MARKER,
+    START_MARKER,
+    apply_powershell_autostart,
     generate_powershell_block,
     has_jellyfish_block,
     inject_block,
     remove_block,
-    apply_powershell_autostart,
     remove_powershell_autostart,
 )
 

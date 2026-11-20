@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+
 from rich.style import Style
 from rich.theme import Theme
 

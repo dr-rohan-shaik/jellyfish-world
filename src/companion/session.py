@@ -6,28 +6,24 @@ Usage:
 """
 from __future__ import annotations
 
-import os
 import shutil
 import sys
 import time
 from pathlib import Path
 
-# Ensure project root is in sys.path
-_repo_root = str(Path(__file__).resolve().parent.parent.parent)
-if _repo_root not in sys.path:
-    sys.path.insert(0, _repo_root)
-
 from rich.console import Console
 from rich.panel import Panel
-from rich.text import Text
 
+from src.bootstrap import ensure_project_root_on_path
+from src.bridge.mcp_server import STATE
+from src.companion.agent_watcher import render_agent_watcher_table
+from src.companion.chat import respond_to_owner
+from src.companion.work_context import generate_work_options
 from src.core.cosmetics import load_cosmetics_catalog
 from src.ui.ascii_art import render_jellyfish_card
 from src.ui.palette import Palette, get_theme
-from src.companion.agent_watcher import render_agent_watcher_table, record_agent_event
-from src.companion.work_context import generate_work_options
-from src.companion.chat import respond_to_owner
-from src.bridge.mcp_server import STATE
+
+ensure_project_root_on_path()
 
 
 def handle_direct_message(args: list[str]) -> None:
@@ -50,7 +46,7 @@ def handle_direct_message(args: list[str]) -> None:
     console.print(f"\n[bold {Palette.ELECTRIC_CYAN}]{STATE['name']}[/]{founder_tag}: [italic {Palette.WHITE}]{reply.replace(STATE['name'] + ': ', '')}[/]\n")
 
 
-def chat_loop(console: Console, jelly_name: str, mood: str):
+def chat_loop(console: Console, jelly_name: str, mood: str) -> None:
     """Interactive continuous chat mode."""
     console.print(Panel(
         f"[bold {Palette.CYAN}]💬 Whispering to {jelly_name}...[/bold {Palette.CYAN}]\n"
@@ -60,7 +56,7 @@ def chat_loop(console: Console, jelly_name: str, mood: str):
 
     while True:
         try:
-            msg = input(f"\nYou > ").strip()
+            msg = input("\nYou > ").strip()
         except (KeyboardInterrupt, EOFError):
             break
 
@@ -72,7 +68,7 @@ def chat_loop(console: Console, jelly_name: str, mood: str):
         console.print(f"[bold {Palette.ELECTRIC_CYAN}]{jelly_name}[/]{founder_tag}: [italic {Palette.WHITE}]{reply.replace(jelly_name + ': ', '')}[/]")
 
 
-def run_companion_session():
+def run_companion_session() -> None:
     """Run interactive terminal companion loop."""
     console = Console(theme=get_theme())
     catalog = load_cosmetics_catalog()
@@ -80,6 +76,9 @@ def run_companion_session():
 
     frame_idx = 0
     speech_msg = "I am drifting quietly beside you. How can I help with your flow?"
+
+    # Get repo root for cli_path
+    repo_root = Path(__file__).resolve().parent.parent.parent
 
     while True:
         cols, rows = shutil.get_terminal_size((80, 24))
@@ -170,11 +169,11 @@ def run_companion_session():
         elif choice == "5":
             from src.autostart.sidepane import open_sidepane
             py_path = sys.executable
-            cli_path = str(Path(_repo_root) / "src" / "cli" / "jelly.py")
+            cli_path = str(repo_root / "src" / "cli" / "jelly.py")
             ok, msg = open_sidepane(py_path, cli_path)
             if ok:
                 speech_msg = "I've floated over into your Windows Terminal sidepane!"
-                console.print(f"[green]✓ Opened sidepane.[/green]")
+                console.print("[green]✓ Opened sidepane.[/green]")
             else:
                 speech_msg = f"Could not spawn sidepane: {msg}"
                 console.print(f"[red]✗ {msg}[/red]")

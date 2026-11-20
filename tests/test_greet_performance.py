@@ -1,30 +1,30 @@
 """Performance and responsiveness tests for `jelly greet`."""
 import os
+import subprocess
 import sys
 import time
-import subprocess
 from pathlib import Path
 
 
 def test_greet_import_and_execution_under_50ms():
     """Verify that importing and running greet in-process is lightning fast (< 50ms) with zero heavy libraries."""
-    # Ensure heavy libraries are not imported
-    assert "torch" not in sys.modules
-    assert "transformers" not in sys.modules
-    assert "httpx" not in sys.modules
+    # Ensure heavy libraries are not imported BY THE GREET MODULE
+    # (They may be in sys.modules from other tests, but greet should not import them)
+    heavy_libs = {"torch", "transformers", "httpx"}
+    before_import = set(sys.modules.keys()) & heavy_libs
 
     t0 = time.perf_counter()
     from src.autostart.greet import play_greeting
-    played = play_greeting(max_seconds=0.01, is_autostart=True)
+    play_greeting(max_seconds=0.01, is_autostart=True)
     elapsed_ms = (time.perf_counter() - t0) * 1000
 
     # In-process startup must be well under 50 ms
     assert elapsed_ms < 50, f"In-process greet initialization too slow: {elapsed_ms:.2f} ms"
 
-    # Confirm heavy libraries were NOT loaded by greet
-    assert "torch" not in sys.modules
-    assert "transformers" not in sys.modules
-    assert "httpx" not in sys.modules
+    # Confirm heavy libraries were NOT loaded by greet module import
+    after_import = set(sys.modules.keys()) & heavy_libs
+    newly_imported = after_import - before_import
+    assert not newly_imported, f"Greet module imported heavy libraries: {newly_imported}"
 
 
 def test_greet_subprocess_cold_start():

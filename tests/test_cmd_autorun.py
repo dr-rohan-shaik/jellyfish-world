@@ -1,9 +1,9 @@
 """Unit tests for Command Prompt AutoRun string manipulation."""
 from src.autostart.cmd_autorun import (
-    generate_cmd_hook,
     append_to_autorun,
-    remove_from_autorun,
+    generate_cmd_hook,
     is_jelly_hook,
+    remove_from_autorun,
 )
 
 

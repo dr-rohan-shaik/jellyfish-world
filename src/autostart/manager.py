@@ -9,30 +9,30 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Tuple
+
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from src.autostart.cmd_autorun import (
+    HOOK_IDENTIFIER,
+    append_to_autorun,
+    generate_cmd_hook,
+    get_current_autorun,
+    remove_cmd_autorun,
+    set_cmd_autorun,
+)
 from src.autostart.powershell import (
-    locate_active_profile,
-    has_jellyfish_block,
-    generate_powershell_block,
     apply_powershell_autostart,
+    generate_powershell_block,
+    has_jellyfish_block,
+    locate_active_profile,
     remove_powershell_autostart,
 )
-from src.autostart.cmd_autorun import (
-    get_current_autorun,
-    generate_cmd_hook,
-    append_to_autorun,
-    set_cmd_autorun,
-    remove_cmd_autorun,
-    HOOK_IDENTIFIER,
-)
-from src.ui.palette import get_theme, Palette
+from src.ui.palette import Palette
 
 
-def get_default_paths() -> Tuple[str, str]:
+def get_default_paths() -> tuple[str, str]:
     """Get paths to current venv python and jelly CLI entry point."""
     py_path = sys.executable
     repo_root = Path(__file__).resolve().parent.parent.parent
@@ -103,14 +103,14 @@ def enable_autostart(console: Console, assume_yes: bool = False) -> bool:
     if success_ps:
         console.print(f"[green]✓[/green] PowerShell profile updated. Backup saved to: [dim]{bak_ps}[/dim]")
     else:
-        console.print(f"[red]✗[/red] Failed to update PowerShell profile.")
+        console.print("[red]✗[/red] Failed to update PowerShell profile.")
 
     # Apply CMD
     success_cmd, _, _ = set_cmd_autorun(py_path, cli_path)
     if success_cmd:
-        console.print(f"[green]✓[/green] Command Prompt AutoRun registry updated in HKCU.")
+        console.print("[green]✓[/green] Command Prompt AutoRun registry updated in HKCU.")
     else:
-        console.print(f"[red]✗[/red] Failed to update CMD registry.")
+        console.print("[red]✗[/red] Failed to update CMD registry.")
 
     console.print("\n[bold cyan]Terminal autostart enabled successfully![/bold cyan]")
     return True
@@ -119,7 +119,7 @@ def enable_autostart(console: Console, assume_yes: bool = False) -> bool:
 def disable_autostart(console: Console, assume_yes: bool = False) -> bool:
     """Disable terminal autostart for PowerShell and CMD after confirmation."""
     ps_profile = locate_active_profile()
-    cmd_prev = get_current_autorun()
+    get_current_autorun()
 
     console.print(Panel(
         f"[bold cyan]Planned Removal of Terminal Autostart:[/bold cyan]\n\n"
@@ -144,14 +144,14 @@ def disable_autostart(console: Console, assume_yes: bool = False) -> bool:
         if success_ps:
             console.print(f"[green]✓[/green] Removed jellyfish block from PowerShell profile. Backup: [dim]{bak_ps}[/dim]")
         else:
-            console.print(f"[dim]PowerShell profile had no active jellyfish block.[/dim]")
+            console.print("[dim]PowerShell profile had no active jellyfish block.[/dim]")
 
     # Remove CMD
     success_cmd, new_cmd, _ = remove_cmd_autorun()
     if success_cmd:
-        console.print(f"[green]✓[/green] Removed jellyfish hook from CMD AutoRun in HKCU.")
+        console.print("[green]✓[/green] Removed jellyfish hook from CMD AutoRun in HKCU.")
     else:
-        console.print(f"[dim]Command Prompt AutoRun had no active jellyfish hook.[/dim]")
+        console.print("[dim]Command Prompt AutoRun had no active jellyfish hook.[/dim]")
 
     console.print("\n[bold cyan]Terminal autostart disabled.[/bold cyan]")
     return True

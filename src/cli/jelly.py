@@ -5,35 +5,35 @@ Fast path:
 - `jelly greet`: executes with minimal overhead (<50ms).
 - `jelly mcp`: launches stdio JSON-RPC MCP server for Claude, Codex, OpenCode, Hermes, OpenClaw.
 """
-import sys
-import os
+from __future__ import annotations
 
-# Ensure src is on sys.path
-_repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if _repo_root not in sys.path:
-    sys.path.insert(0, _repo_root)
-
-# Fast path 1: `jelly greet`
-if len(sys.argv) > 1 and sys.argv[1] == "greet":
-    from src.autostart.greet import play_greeting
-    force_flag = "--force" in sys.argv or "-f" in sys.argv
-    autostart_flag = "--autostart" in sys.argv
-    play_greeting(force=force_flag, is_autostart=autostart_flag)
-    sys.exit(0)
-
-# Fast path 2: `jelly mcp` (stdio server for connected agents)
-if len(sys.argv) > 1 and sys.argv[1] == "mcp":
-    from src.bridge.mcp_server import run_mcp_server
-    run_mcp_server()
-    sys.exit(0)
-
-# Full CLI imports for management commands
 import argparse
+import os
+import sys
+
 from rich.console import Console
+
+# Fast-path modules (lightweight, imported early for speed)
+from src.autostart.greet import play_greeting
+
+# Bootstrap must be imported first to ensure project root is on sys.path
+from src.bridge.mcp_server import run_mcp_server
 from src.ui.palette import get_theme
 
 
 def main():
+    # Fast path 1: `jelly greet`
+    if len(sys.argv) > 1 and sys.argv[1] == "greet":
+        force_flag = "--force" in sys.argv or "-f" in sys.argv
+        autostart_flag = "--autostart" in sys.argv
+        play_greeting(force=force_flag, is_autostart=autostart_flag)
+        sys.exit(0)
+
+    # Fast path 2: `jelly mcp` (stdio server for connected agents)
+    if len(sys.argv) > 1 and sys.argv[1] == "mcp":
+        run_mcp_server()
+        sys.exit(0)
+
     parser = argparse.ArgumentParser(
         prog="jelly",
         description="Jellyfish World — Terminal Companion & Agent Bridge",
@@ -69,15 +69,20 @@ def main():
     home_p = subparsers.add_parser("home", help="Open live floating jellyfish view")
     home_p.add_argument("--cycles", type=int, default=0, help="Cycles to run (0 = infinite)")
 
+    # gitpush command
+    gitpush_p = subparsers.add_parser("gitpush", help="Commit and push changes with a calm message")
+    gitpush_p.add_argument("-m", "--message", type=str, help="Commit message (optional, will generate one if not provided)")
+    gitpush_p.add_argument("-b", "--branch", type=str, help="Branch to push to (default: auto-detect)")
+    gitpush_p.add_argument("--remote", type=str, default="origin", help="Git remote name (default: origin)")
+    gitpush_p.add_argument("-y", "--yes", action="store_true", help="Skip confirmation prompts")
+
     args = parser.parse_args()
     console = Console(theme=get_theme())
 
     if args.command == "greet":
-        from src.autostart.greet import play_greeting
         play_greeting(force=args.force, is_autostart=args.autostart)
 
     elif args.command == "mcp":
-        from src.bridge.mcp_server import run_mcp_server
         run_mcp_server()
 
     elif args.command == "connect":
@@ -92,7 +97,7 @@ def main():
         run_disconnect(console, target=args.target)
 
     elif args.command == "autostart":
-        from src.autostart.manager import show_status, enable_autostart, disable_autostart
+        from src.autostart.manager import disable_autostart, enable_autostart, show_status
         if args.action == "status":
             show_status(console)
         elif args.action == "on":
@@ -101,7 +106,7 @@ def main():
             disable_autostart(console, assume_yes=args.yes)
 
     elif args.command == "sidepane":
-        from src.autostart.sidepane import open_sidepane, close_sidepane_instruction
+        from src.autostart.sidepane import close_sidepane_instruction, open_sidepane
         if args.action == "on":
             py_path = sys.executable
             cli_path = os.path.abspath(__file__)
@@ -116,6 +121,16 @@ def main():
     elif args.command == "home":
         from src.ui.preview import run_preview
         run_preview(cycles=args.cycles)
+
+    elif args.command == "gitpush":
+        from src.cli.gitpush import run_gitpush
+        run_gitpush(
+            message=args.message,
+            branch=args.branch,
+            remote=args.remote,
+            skip_confirmation=args.yes,
+            console=console,
+        )
 
     else:
         parser.print_help()

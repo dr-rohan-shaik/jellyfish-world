@@ -8,12 +8,20 @@ Coordinates:
 """
 from __future__ import annotations
 
+import logging
 import os
 import sys
-from typing import Optional
 
-from src.ai.decision_engine import is_decision_query, extract_options, decide_choice
+from src.ai.decision_engine import decide_choice, extract_options, is_decision_query
 from src.ai.semantic_engine import generate_semantic_reply
+
+# Configure logger for BYOK warnings
+_logger = logging.getLogger("jellyfish.ai.adapter")
+if not _logger.handlers:
+    handler = logging.StreamHandler(sys.stderr)
+    handler.setFormatter(logging.Formatter("[jellyfish] %(levelname)s: %(message)s"))
+    _logger.addHandler(handler)
+    _logger.setLevel(logging.WARNING)
 
 
 def query_jellyfish_ai(
@@ -63,12 +71,25 @@ def query_jellyfish_ai(
                 )
                 if res.status_code == 200:
                     data = res.json()
-                    content = data["choices"][0]["message"]["content"].strip()
+                    content: str = str(data["choices"][0]["message"]["content"]).strip()
                     if content:
                         return content
-        except Exception:
-            # Fall back seamlessly to local semantic engine
-            pass
+                else:
+                    _logger.warning(
+                        "BYOK request failed with status %d: %s",
+                        res.status_code,
+                        res.text[:200],
+                    )
+        except ImportError:
+            _logger.warning(
+                "BYOK provider requested but 'httpx' is not installed. "
+                "Install with: pip install httpx>=0.27.0. Falling back to local engine."
+            )
+        except Exception as e:
+            _logger.warning(
+                "BYOK request failed: %s. Falling back to local semantic engine.",
+                e,
+            )
 
     # Default: High-quality local semantic engine
     return generate_semantic_reply(message, jellyfish_name, mood)

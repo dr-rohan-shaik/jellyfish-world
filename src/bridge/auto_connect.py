@@ -14,10 +14,10 @@ import os
 import shutil
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 
-def get_default_paths() -> Tuple[str, str]:
+def get_default_paths() -> tuple[str, str]:
     """Get paths to current virtualenv python and main cli entrypoint."""
     py_path = sys.executable
     repo_root = Path(__file__).resolve().parent.parent.parent
@@ -25,7 +25,7 @@ def get_default_paths() -> Tuple[str, str]:
     return py_path, cli_path
 
 
-def get_agent_config_targets() -> Dict[str, List[Path]]:
+def get_agent_config_targets() -> dict[str, list[Path]]:
     """Return map of agent names to their potential MCP configuration paths."""
     home = Path.home()
     appdata = Path(os.environ.get("APPDATA", str(home / "AppData" / "Roaming")))
@@ -47,7 +47,7 @@ def get_agent_config_targets() -> Dict[str, List[Path]]:
     }
 
 
-def backup_file(path: Path) -> Optional[Path]:
+def backup_file(path: Path) -> Path | None:
     """Create timestamped backup of a config file."""
     if not path.exists():
         return None
@@ -57,7 +57,7 @@ def backup_file(path: Path) -> Optional[Path]:
     return bak_path
 
 
-def generate_mcp_entry(python_path: str, cli_path: str) -> Dict[str, Any]:
+def generate_mcp_entry(python_path: str, cli_path: str) -> dict[str, Any]:
     """Format the MCP stdio server entry for JSON configs."""
     return {
         "command": python_path,
@@ -68,14 +68,14 @@ def generate_mcp_entry(python_path: str, cli_path: str) -> Dict[str, Any]:
     }
 
 
-def inject_mcp_into_json(file_path: Path, python_path: str, cli_path: str) -> Tuple[bool, str, Optional[Path]]:
+def inject_mcp_into_json(file_path: Path, python_path: str, cli_path: str) -> tuple[bool, str, Path | None]:
     """Add jellyfish entry to an MCP JSON configuration file."""
     bak = backup_file(file_path) if file_path.exists() else None
-    data: Dict[str, Any] = {}
+    data: dict[str, Any] = {}
 
     if file_path.exists():
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read().strip()
                 if content:
                     data = json.loads(content)
@@ -96,14 +96,14 @@ def inject_mcp_into_json(file_path: Path, python_path: str, cli_path: str) -> Tu
     return True, f"Injected into {file_path}", bak
 
 
-def remove_mcp_from_json(file_path: Path) -> Tuple[bool, str, Optional[Path]]:
+def remove_mcp_from_json(file_path: Path) -> tuple[bool, str, Path | None]:
     """Remove jellyfish entry from an MCP JSON configuration file."""
     if not file_path.exists():
         return False, "Config file does not exist", None
 
     bak = backup_file(file_path)
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             data = json.load(f)
     except Exception:
         return False, "Failed to parse JSON file", None
@@ -123,7 +123,7 @@ def remove_mcp_from_json(file_path: Path) -> Tuple[bool, str, Optional[Path]]:
     return True, f"Removed jellyfish entry from {file_path}", bak
 
 
-def generate_generic_runners(repo_root: Path, python_path: str, cli_path: str) -> Tuple[Path, Path]:
+def generate_generic_runners(repo_root: Path, python_path: str, cli_path: str) -> tuple[Path, Path]:
     """Generate universal runner scripts for OpenClaw, Hermes, DeepSeek, and CLI agents."""
     bat_path = repo_root / "mcp_runner.bat"
     sh_path = repo_root / "mcp_runner.sh"
@@ -141,7 +141,7 @@ def generate_generic_runners(repo_root: Path, python_path: str, cli_path: str) -
     return bat_path, sh_path
 
 
-def scan_agent_status() -> List[Dict[str, Any]]:
+def scan_agent_status() -> list[dict[str, Any]]:
     """Inspect all supported agent configurations and return their status."""
     targets = get_agent_config_targets()
     results = []
@@ -154,7 +154,7 @@ def scan_agent_status() -> List[Dict[str, Any]]:
             if p.exists():
                 found_path = p
                 try:
-                    with open(p, "r", encoding="utf-8") as f:
+                    with open(p, encoding="utf-8") as f:
                         data = json.load(f)
                         servers = data.get("mcpServers") or data.get("servers") or {}
                         if "jellyfish" in servers:
@@ -172,7 +172,7 @@ def scan_agent_status() -> List[Dict[str, Any]]:
     return results
 
 
-def connect_all_agents(repo_root: Optional[Path] = None) -> List[Dict[str, Any]]:
+def connect_all_agents(repo_root: Path | None = None) -> list[dict[str, Any]]:
     """Automatically connect Jellyfish MCP bridge to all detected agents."""
     py_path, cli_path = get_default_paths()
     if repo_root is None:
@@ -200,7 +200,7 @@ def connect_all_agents(repo_root: Optional[Path] = None) -> List[Dict[str, Any]]
     return reports
 
 
-def disconnect_all_agents() -> List[Dict[str, Any]]:
+def disconnect_all_agents() -> list[dict[str, Any]]:
     """Remove Jellyfish MCP bridge from all configured agents."""
     targets = get_agent_config_targets()
     reports = []

@@ -1,7 +1,5 @@
 """Tests for Stage 1: Design Preview, Animation Frames, and Layered Accessories."""
-import os
-import pytest
-from src.core.cosmetics import load_cosmetics_catalog, apply_cosmetics_to_frame
+from src.core.cosmetics import apply_cosmetics_to_frame, load_cosmetics_catalog
 from src.ui.ascii_art import (
     RAW_FRAMES,
     get_animated_frame,

@@ -1,19 +1,15 @@
 """Unit tests for Stage 8: Universal Agent Bridge (MCP & Auto-Connect)."""
 import json
-import pytest
 from pathlib import Path
 
-from src.bridge.mcp_server import (
-    process_mcp_message,
-    execute_tool,
-    STATE,
-)
 from src.bridge.auto_connect import (
+    generate_generic_runners,
     inject_mcp_into_json,
     remove_mcp_from_json,
-    generate_mcp_entry,
-    generate_generic_runners,
-    scan_agent_status,
+)
+from src.bridge.mcp_server import (
+    STATE,
+    process_mcp_message,
 )
 
 
@@ -139,7 +135,7 @@ def test_inject_and_remove_mcp_json(tmp_path: Path):
     assert bak is not None
     assert bak.exists()
 
-    with open(test_cfg, "r", encoding="utf-8") as f:
+    with open(test_cfg, encoding="utf-8") as f:
         data = json.load(f)
     assert "jellyfish" in data["mcpServers"]
     assert "other" in data["mcpServers"]
@@ -147,7 +143,7 @@ def test_inject_and_remove_mcp_json(tmp_path: Path):
     # Remove
     ok_rem, msg_rem, bak2 = remove_mcp_from_json(test_cfg)
     assert ok_rem is True
-    with open(test_cfg, "r", encoding="utf-8") as f:
+    with open(test_cfg, encoding="utf-8") as f:
         data_after = json.load(f)
     assert "jellyfish" not in data_after["mcpServers"]
     assert "other" in data_after["mcpServers"]

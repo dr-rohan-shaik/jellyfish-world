@@ -1,13 +1,12 @@
 """Unit tests for autostart shell guards and loop prevention."""
-import os
 import sys
-import pytest
+
 from src.autostart.guards import (
-    should_suppress_greeting,
-    is_seen,
-    mark_seen,
-    is_vscode_terminal,
     is_quiet_mode,
+    is_seen,
+    is_vscode_terminal,
+    mark_seen,
+    should_suppress_greeting,
 )
 
 

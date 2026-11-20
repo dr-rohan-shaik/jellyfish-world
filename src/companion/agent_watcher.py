@@ -13,18 +13,27 @@ from __future__ import annotations
 
 import datetime
 import json
-import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from rich.table import Table
-from rich.panel import Panel
-from rich.text import Text
 
 from src.ui.palette import Palette
+
+# Module-level variable for test override
+_activity_log_path_override: Path | None = None
+
+
+def set_activity_log_path_override(path: Path | None) -> None:
+    """Override the activity log path for testing purposes."""
+    global _activity_log_path_override
+    _activity_log_path_override = path
 
 
 def get_activity_log_path() -> Path:
     """Return path to local agent activity buffer."""
+    if _activity_log_path_override is not None:
+        return _activity_log_path_override
     repo_root = Path(__file__).resolve().parent.parent.parent
     data_dir = repo_root / "data"
     data_dir.mkdir(parents=True, exist_ok=True)
@@ -34,11 +43,11 @@ def get_activity_log_path() -> Path:
 def record_agent_event(agent_name: str, event_text: str, mood: str = "calm") -> None:
     """Record a new event from an external AI agent."""
     log_path = get_activity_log_path()
-    events: List[Dict[str, Any]] = []
+    events: list[dict[str, Any]] = []
 
     if log_path.exists():
         try:
-            with open(log_path, "r", encoding="utf-8") as f:
+            with open(log_path, encoding="utf-8") as f:
                 events = json.load(f)
         except Exception:
             events = []
@@ -58,17 +67,14 @@ def record_agent_event(agent_name: str, event_text: str, mood: str = "calm") -> 
         json.dump(events, f, indent=2)
 
 
-def get_recent_agent_events() -> List[Dict[str, Any]]:
+def get_recent_agent_events() -> list[dict[str, Any]]:
     """Return list of recent agent activities."""
     log_path = get_activity_log_path()
     if not log_path.exists():
-        # Provide welcoming seed events if file is new
-        return [
-            {"time": "Now", "agent": "Claude Code", "event": "Connected via MCP stdio bridge", "mood": "calm"},
-            {"time": "Now", "agent": "OpenCode", "event": "Ready to report coding tasks", "mood": "curious"},
-        ]
+        # Return empty list - no fake seed events
+        return []
     try:
-        with open(log_path, "r", encoding="utf-8") as f:
+        with open(log_path, encoding="utf-8") as f:
             data = json.load(f)
             return data if data else []
     except Exception:
@@ -88,21 +94,29 @@ def render_agent_watcher_table() -> Table:
     table.add_column("Glow Reaction", justify="center", width=15)
 
     events = get_recent_agent_events()
-    for e in events[:10]:
-        mood_str = e.get("mood", "calm")
-        if mood_str == "sparkle":
-            glow_badge = f"[bold {Palette.PINK}]★ sparkle[/]"
-        elif mood_str == "curious":
-            glow_badge = f"[{Palette.ROSE}]? curious[/]"
-        elif mood_str == "playful":
-            glow_badge = f"[bold {Palette.GOLD}]~ playful[/]"
-        else:
-            glow_badge = f"[{Palette.CYAN}]· calm[/]"
-
+    if not events:
         table.add_row(
-            e.get("time", ""),
-            e.get("agent", "Agent"),
-            e.get("event", ""),
-            glow_badge,
+            "—",
+            "[dim]No agents connected[/dim]",
+            "[dim]Run 'jelly connect all' to link agents via MCP[/dim]",
+            "[dim]—[/dim]",
         )
+    else:
+        for e in events[:10]:
+            mood_str = e.get("mood", "calm")
+            if mood_str == "sparkle":
+                glow_badge = f"[bold {Palette.PINK}]★ sparkle[/]"
+            elif mood_str == "curious":
+                glow_badge = f"[{Palette.ROSE}]? curious[/]"
+            elif mood_str == "playful":
+                glow_badge = f"[bold {Palette.GOLD}]~ playful[/]"
+            else:
+                glow_badge = f"[{Palette.CYAN}]· calm[/]"
+
+            table.add_row(
+                e.get("time", ""),
+                e.get("agent", "Agent"),
+                e.get("event", ""),
+                glow_badge,
+            )
     return table

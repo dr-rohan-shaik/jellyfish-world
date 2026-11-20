@@ -1,0 +1,131 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test (Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        exclude:
+          # macOS only on latest Python
+          - os: macos-latest
+            python-version: "3.11"
+          - os: macos-latest
+            python-version: "3.12"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev,byok]
+
+      - name: Run ruff (lint)
+        run: ruff check src tests
+
+      - name: Run ruff format check
+        run: ruff format --check src tests
+
+      - name: Run mypy (type check)
+        run: mypy src
+
+      - name: Run pytest
+        run: pytest tests --cov=src --cov-report=xml --cov-fail-under=60
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
+
+  windows-specific:
+    name: Windows-specific tests
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev,byok]
+
+      - name: Test Windows autostart (PowerShell)
+        run: |
+          python -c "
+          import sys
+          sys.path.insert(0, '.')
+          from src.autostart.powershell import generate_powershell_block, inject_block, remove_block
+          block = generate_powershell_block('C:/python.exe', 'C:/jelly.py')
+          assert '# >>> jellyfish' in block
+          assert '# <<< jellyfish' in block
+          print('PowerShell block generation: OK')
+          "
+
+      - name: Test Windows autostart (CMD)
+        run: |
+          python -c "
+          import sys
+          sys.path.insert(0, '.')
+          from src.autostart.cmd_autorun import generate_cmd_hook, append_to_autorun, remove_from_autorun, is_jelly_hook
+          hook = generate_cmd_hook('C:/python.exe', 'C:/jelly.py')
+          assert is_jelly_hook(hook)
+          assert 'JELLY_SEEN' in hook
+          print('CMD hook generation: OK')
+          "
+
+      - name: Test sidepane detection
+        run: |
+          python -c "
+          import sys
+          sys.path.insert(0, '.')
+          from src.autostart.sidepane import is_windows_terminal_available
+          # Just verify it runs without error
+          result = is_windows_terminal_available()
+          print(f'Windows Terminal available: {result}')
+          "
+
+  publish-check:
+    name: Publish Check
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install build tools
+        run: pip install build twine
+
+      - name: Build package
+        run: python -m build
+
+      - name: Check package
+        run: twine check dist/*

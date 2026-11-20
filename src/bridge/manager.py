@@ -2,19 +2,19 @@
 from __future__ import annotations
 
 from pathlib import Path
+
 from rich.console import Console
 from rich.table import Table
-from rich.panel import Panel
 
 from src.bridge.auto_connect import (
-    scan_agent_status,
     connect_all_agents,
     disconnect_all_agents,
+    generate_generic_runners,
     get_agent_config_targets,
+    get_default_paths,
     inject_mcp_into_json,
     remove_mcp_from_json,
-    get_default_paths,
-    generate_generic_runners,
+    scan_agent_status,
 )
 from src.ui.palette import Palette
 
@@ -58,7 +58,7 @@ def run_connect(console: Console, target: str = "all") -> None:
 
     # Universal runners
     bat, sh = generate_generic_runners(repo_root, py_path, cli_path)
-    console.print(f"[green]✓[/green] Universal runner scripts created for OpenClaw/Hermes/DeepSeek:")
+    console.print("[green]✓[/green] Universal runner scripts created for OpenClaw/Hermes/DeepSeek:")
     console.print(f"    - [dim]{bat}[/dim]\n    - [dim]{sh}[/dim]")
 
     if target.lower() == "all":

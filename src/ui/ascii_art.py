@@ -9,18 +9,22 @@ Implements:
 """
 from __future__ import annotations
 
-from typing import List, Optional, Tuple
-from rich.panel import Panel
 from rich.align import Align
+from rich.box import DOUBLE, ROUNDED
+from rich.panel import Panel
 from rich.text import Text
-from rich.box import ROUNDED, DOUBLE
 
 from src.core.cosmetics import CosmeticItem, apply_cosmetics_to_frame
 from src.ui.palette import Palette, get_mood_color, is_no_color, is_reduced_motion
 
+# Animation constants
+FRAME_WIDTH = 21
+FRAME_HEIGHT = 7
+MAX_DRIFT = 2
+TOTAL_FRAMES = 4
 
 # 4 distinct animation frames (Width: 21 chars centered)
-RAW_FRAMES: List[Tuple[int, List[str]]] = [
+RAW_FRAMES: list[tuple[int, list[str]]] = [
     # Frame 0: Bell contracted, float at highest point (drift offset = 0)
     (
         0,
@@ -78,7 +82,7 @@ RAW_FRAMES: List[Tuple[int, List[str]]] = [
 
 def get_animated_frame(
     frame_idx: int,
-    equipped: Optional[List[CosmeticItem]] = None,
+    equipped: list[CosmeticItem] | None = None,
     mood: str = "calm",
     is_founder: bool = False,
     include_drift: bool = True,
@@ -106,15 +110,14 @@ def get_animated_frame(
     composited_lines = apply_cosmetics_to_frame(
         frame_lines=base_lines,
         equipped_items=equipped or [],
-        target_width=21,
+        target_width=FRAME_WIDTH,
     )
 
     # Vertical drift padding (0, 1, or 2 blank lines at top, remaining at bottom)
-    max_drift = 2
     top_pad = drift_offset if include_drift else 1
-    bottom_pad = (max_drift - top_pad) if include_drift else 1
+    bottom_pad = (MAX_DRIFT - top_pad) if include_drift else 1
 
-    all_lines = ([" " * 21] * top_pad) + composited_lines + ([" " * 21] * bottom_pad)
+    all_lines = ([" " * FRAME_WIDTH] * top_pad) + composited_lines + ([" " * FRAME_WIDTH] * bottom_pad)
 
     # Build styled text
     mood_color = get_mood_color(mood)
@@ -150,8 +153,8 @@ def render_jellyfish_card(
     number: int = 1,
     mood: str = "calm",
     is_founder: bool = False,
-    equipped: Optional[List[CosmeticItem]] = None,
-    speech: Optional[str] = None,
+    equipped: list[CosmeticItem] | None = None,
+    speech: str | None = None,
     hint: str = "jellyfish <message>",
     terminal_width: int = 80,
     terminal_height: int = 24,

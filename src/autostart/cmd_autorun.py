@@ -7,7 +7,6 @@ Preserves existing AutoRun commands and appends/removes surgically.
 from __future__ import annotations
 
 import sys
-from typing import Optional, Tuple
 
 REG_SUBKEY = r"Software\Microsoft\Command Processor"
 REG_VALUE_NAME = "AutoRun"
@@ -27,7 +26,7 @@ def is_jelly_hook(part: str) -> bool:
     return ("jelly.py" in clean or "jelly" in clean) and "greet" in clean and "JELLY_SEEN" in clean
 
 
-def append_to_autorun(existing: Optional[str], hook: str) -> str:
+def append_to_autorun(existing: str | None, hook: str) -> str:
     """Append hook to existing AutoRun command without overwriting it."""
     if not existing or not existing.strip():
         return hook
@@ -43,7 +42,7 @@ def append_to_autorun(existing: Optional[str], hook: str) -> str:
     return f"{clean_existing} & {hook}"
 
 
-def remove_from_autorun(current: Optional[str]) -> Optional[str]:
+def remove_from_autorun(current: str | None) -> str | None:
     """Surgically remove the jellyfish hook from the AutoRun string."""
     if not current:
         return None
@@ -57,7 +56,7 @@ def remove_from_autorun(current: Optional[str]) -> Optional[str]:
     return " & ".join(remaining)
 
 
-def get_current_autorun() -> Optional[str]:
+def get_current_autorun() -> str | None:
     """Read the current AutoRun registry value from HKCU."""
     if sys.platform != "win32":
         return None
@@ -76,7 +75,7 @@ def get_current_autorun() -> Optional[str]:
 def set_cmd_autorun(
     python_path: str,
     cli_path: str,
-) -> Tuple[bool, str, Optional[str]]:
+) -> tuple[bool, str, str | None]:
     """Set/append the jellyfish hook in HKCU Command Processor AutoRun.
 
     Returns:
@@ -98,7 +97,7 @@ def set_cmd_autorun(
         return False, f"Registry error: {e}", prev
 
 
-def remove_cmd_autorun() -> Tuple[bool, Optional[str], Optional[str]]:
+def remove_cmd_autorun() -> tuple[bool, str | None, str | None]:
     """Remove the jellyfish hook from HKCU Command Processor AutoRun.
 
     Returns:

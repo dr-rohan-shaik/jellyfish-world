@@ -14,18 +14,20 @@ Strictly enforces locked invariants (no chat leaks, no release via agent).
 from __future__ import annotations
 
 import json
-import os
 import sys
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+import threading
+from typing import Any
 
-# Ensure project root is in sys.path
-_repo_root = str(Path(__file__).resolve().parent.parent.parent)
-if _repo_root not in sys.path:
-    sys.path.insert(0, _repo_root)
+# Use bootstrap to ensure project root is on sys.path
+from src.bootstrap import ensure_project_root_on_path
+
+ensure_project_root_on_path()
+
+# Thread-safe state management
+_state_lock = threading.RLock()
 
 # Global in-memory temporary state for the active jellyfish session
-STATE = {
+_STATE: dict[str, Any] = {
     "name": "Aurelia",
     "number": 1,
     "is_founder": True,
@@ -35,8 +37,52 @@ STATE = {
 }
 
 
+def _get_state() -> dict[str, Any]:
+    """Get a thread-safe copy of the current state."""
+    with _state_lock:
+        return _STATE.copy()
+
+
+def _set_state(key: str, value: Any) -> None:
+    """Thread-safe state mutation."""
+    with _state_lock:
+        _STATE[key] = value
+
+
+def _update_state(updates: dict[str, Any]) -> None:
+    """Thread-safe bulk state update."""
+    with _state_lock:
+        _STATE.update(updates)
+
+
+# Backward compatibility property
+class _StateProxy:
+    """Proxy object that provides dict-like access to thread-safe state."""
+
+    def __getitem__(self, key: str) -> Any:
+        with _state_lock:
+            return _STATE[key]
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        _set_state(key, value)
+
+    def __contains__(self, key: str) -> bool:
+        with _state_lock:
+            return key in _STATE
+
+    def get(self, key: str, default: Any = None) -> Any:
+        with _state_lock:
+            return _STATE.get(key, default)
+
+    def copy(self) -> dict[str, Any]:
+        return _get_state()
+
+
+STATE = _StateProxy()
+
+
 # Tool definitions matching the MCP specification
-MCP_TOOLS: List[Dict[str, Any]] = [
+MCP_TOOLS: list[dict[str, Any]] = [
     {
         "name": "hey_jellyfish",
         "description": "Speak gently to your AI jellyfish in character. It will answer with 1-3 calm sentences.",
@@ -121,16 +167,17 @@ def handle_hey_jellyfish(message: str) -> str:
         return f"{name} listens quietly as light shimmers across its translucent bell. It sways its tentacles gently beside you."
 
 
-def handle_jellyfish_status() -> Dict[str, Any]:
+def handle_jellyfish_status() -> dict[str, Any]:
     """Return public status summary."""
-    return {
-        "name": STATE["name"],
-        "number": f"#{STATE['number']:05d}",
-        "is_founder": STATE["is_founder"],
-        "current_mood": STATE["mood"],
-        "equipped_cosmetics": list(STATE["equipped"]),
-        "taps_today": STATE["tap_count"],
-    }
+    with _state_lock:
+        return {
+            "name": _STATE["name"],
+            "number": f"#{_STATE['number']:05d}",
+            "is_founder": _STATE["is_founder"],
+            "current_mood": _STATE["mood"],
+            "equipped_cosmetics": list(_STATE["equipped"]),
+            "taps_today": _STATE["tap_count"],
+        }
 
 
 def handle_jellyfish_react(event: str) -> str:
@@ -139,16 +186,16 @@ def handle_jellyfish_react(event: str) -> str:
 
     event_lower = event.lower()
     if any(k in event_lower for k in ("success", "passed", "fixed", "done", "complete")):
-        STATE["mood"] = "sparkle"
+        _set_state("mood", "sparkle")
         resp = f"{STATE['name']} sparks with bright bioluminescent pink flashes in celebration!"
     elif any(k in event_lower for k in ("think", "ponder", "search", "explore", "read")):
-        STATE["mood"] = "curious"
+        _set_state("mood", "curious")
         resp = f"{STATE['name']} tilts its bell and hovers closely with a curious rose shimmer."
     elif any(k in event_lower for k in ("play", "fun", "creative", "style")):
-        STATE["mood"] = "playful"
+        _set_state("mood", "playful")
         resp = f"{STATE['name']} performs a gentle flip and floats in a slow golden spiral."
     else:
-        STATE["mood"] = "calm"
+        _set_state("mood", "calm")
         resp = f"{STATE['name']} hums with a deep cyan bioluminescence, watching peacefully."
 
     record_agent_event("AI Agent", event, STATE["mood"])
@@ -157,11 +204,13 @@ def handle_jellyfish_react(event: str) -> str:
 
 def handle_jellyfish_tap() -> str:
     """Increment light feed counter."""
-    STATE["tap_count"] += 1
-    return f"You fed light to {STATE['name']}. Its bell brightens with soothing warmth (Total light feeds: {STATE['tap_count']})."
+    with _state_lock:
+        _STATE["tap_count"] += 1
+        tap_count = _STATE["tap_count"]
+    return f"You fed light to {STATE['name']}. Its bell brightens with soothing warmth (Total light feeds: {tap_count})."
 
 
-def handle_jellyfish_decide(situation: str, options: List[str]) -> Dict[str, Any]:
+def handle_jellyfish_decide(situation: str, options: list[str]) -> dict[str, Any]:
     """Make calm autonomous decision."""
     if not options:
         return {"choice": None, "reason": "No options provided."}
@@ -179,7 +228,7 @@ def handle_jellyfish_decide(situation: str, options: List[str]) -> Dict[str, Any
     }
 
 
-def execute_tool(name: str, arguments: Dict[str, Any]) -> Any:
+def execute_tool(name: str, arguments: dict[str, Any]) -> Any:
     """Route tool call to appropriate handler."""
     if name == "hey_jellyfish":
         msg = arguments.get("message", "")
@@ -204,7 +253,7 @@ def execute_tool(name: str, arguments: Dict[str, Any]) -> Any:
         raise ValueError(f"Unknown tool: {name}")
 
 
-def process_mcp_message(msg: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def process_mcp_message(msg: dict[str, Any]) -> dict[str, Any] | None:
     """Process a single JSON-RPC 2.0 message from stdin."""
     msg_id = msg.get("id")
     method = msg.get("method")

@@ -44,8 +44,16 @@ def is_cmd_slash_c() -> bool:
         return True
 
     # Check Windows PROMPT variable; non-interactive cmd often lacks PROMPT
-    if sys.platform == "win32" and "PROMPT" not in os.environ and "PSModulePath" not in os.environ:
-        return True
+    if sys.platform == "win32":
+        if "PROMPT" not in os.environ and "PSModulePath" not in os.environ:
+            return True
+        # Check for common CI/automation environment variables
+        if any(k in os.environ for k in ("CI", "GITHUB_ACTIONS", "BUILD_BUILDID", "TF_BUILD", "TEAMCITY_VERSION")):
+            return True
+        # Check if parent process is not a typical interactive shell
+        if "WT_SESSION" not in os.environ and "TERM" not in os.environ:
+            # No Windows Terminal session and no TERM variable suggests non-interactive
+            pass  # Not definitive, but a hint
 
     return False
 

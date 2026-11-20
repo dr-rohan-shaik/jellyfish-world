@@ -10,8 +10,6 @@ from __future__ import annotations
 
 import datetime
 import hashlib
-import random
-from typing import Optional
 
 
 def get_time_greeting() -> str:
@@ -87,8 +85,8 @@ def generate_semantic_reply(message: str, jellyfish_name: str = "Aurelia", mood:
     # 6. General thoughtful conversational fallback
     else:
         reflections = [
-            f"I hear you. The deep currents are patient, and I will keep a warm light burning beside your work.",
-            f"Soft ripples carry your words into the deep. Take your time, there is no pressure here.",
+            "I hear you. The deep currents are patient, and I will keep a warm light burning beside your work.",
+            "Soft ripples carry your words into the deep. Take your time, there is no pressure here.",
             f"I pulse gently in response, glowing {mood} in the quiet blue. Steady waters ahead.",
         ]
         return reflections[h % len(reflections)]

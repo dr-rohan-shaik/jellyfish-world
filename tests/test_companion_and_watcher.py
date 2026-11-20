@@ -1,17 +1,31 @@
 """Unit tests for Interactive Companion & Agent Watcher."""
-import pytest
+import tempfile
 from pathlib import Path
 
+import pytest
+
 from src.companion.agent_watcher import (
-    record_agent_event,
     get_recent_agent_events,
+    record_agent_event,
     render_agent_watcher_table,
-)
-from src.companion.work_context import (
-    get_git_status_summary,
-    generate_work_options,
+    set_activity_log_path_override,
 )
 from src.companion.chat import respond_to_owner
+from src.companion.work_context import (
+    generate_work_options,
+)
+
+
+@pytest.fixture(autouse=True)
+def isolate_agent_log():
+    """Isolate each test with its own temporary agent activity log."""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        temp_path = Path(f.name)
+    set_activity_log_path_override(temp_path)
+    yield
+    set_activity_log_path_override(None)
+    if temp_path.exists():
+        temp_path.unlink()
 
 
 def test_agent_watcher_event_recording():
