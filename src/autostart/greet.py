@@ -145,10 +145,10 @@ def play_greeting(
     # Greeting message
     if no_color:
         header = "\n  ~ A calm jellyfish drifts past... (press any key to skip) ~\n"
-        footer = "  hey jellyfish <message> | jelly --help\n"
+        footer = "  jellyfish <message> | jelly --help\n"
     else:
         header = f"\n  {CYAN}~ A calm jellyfish drifts past...{DIM} (press any key to skip){RESET} ~\n"
-        footer = f"  {DIM}hey jellyfish <message> | jelly --help{RESET}\n"
+        footer = f"  {DIM}jellyfish <message> | jelly --help{RESET}\n"
 
     sys.stdout.write(header)
     sys.stdout.flush()

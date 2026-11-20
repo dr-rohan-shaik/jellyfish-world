@@ -1,7 +1,8 @@
-"""Interactive Companion Session for Jellyfish World.
+"""Interactive Companion Session and Direct Chat CLI for Jellyfish World.
 
-Entry point when user runs `jellyfish`.
-Provides floating jellyfish, live in-terminal chat, Agent Watcher, and work options.
+Usage:
+    jellyfish                     -> Launches interactive floating companion dashboard
+    jellyfish <message>           -> Direct in-character answer right in the terminal
 """
 from __future__ import annotations
 
@@ -27,6 +28,26 @@ from src.companion.agent_watcher import render_agent_watcher_table, record_agent
 from src.companion.work_context import generate_work_options
 from src.companion.chat import respond_to_owner
 from src.bridge.mcp_server import STATE
+
+
+def handle_direct_message(args: list[str]) -> None:
+    """Handle one-shot `jellyfish <message>` call directly in the shell."""
+    raw_msg = " ".join(args).strip()
+    words = raw_msg.split()
+
+    # Strip redundant leading 'hey' or 'jellyfish' if present
+    if words and words[0].lower() == "hey":
+        words = words[1:]
+    if words and words[0].lower() == "jellyfish":
+        words = words[1:]
+
+    clean_msg = " ".join(words).strip() or "hello"
+
+    console = Console(theme=get_theme())
+    reply = respond_to_owner(clean_msg, STATE["name"], STATE["mood"])
+    founder_tag = f" [bold {Palette.GOLD}](#00001 ★ FOUNDER)[/]" if STATE["is_founder"] else " [dim](#00001)[/]"
+
+    console.print(f"\n[bold {Palette.ELECTRIC_CYAN}]{STATE['name']}[/]{founder_tag}: [italic {Palette.WHITE}]{reply.replace(STATE['name'] + ': ', '')}[/]\n")
 
 
 def chat_loop(console: Console, jelly_name: str, mood: str):
@@ -72,7 +93,7 @@ def run_companion_session():
             is_founder=STATE["is_founder"],
             equipped=[crown] if crown else [],
             speech=speech_msg,
-            hint="type 1 to chat, 2 to watch agents, or type a message directly",
+            hint="jellyfish <message> | type 1 to chat, 2 to watch agents",
             terminal_width=cols,
             terminal_height=rows,
         )
@@ -130,7 +151,6 @@ def run_companion_session():
             if opt_pick == "A":
                 speech_msg = "Focus softly on your code flow. Steady currents carry great work."
             elif opt_pick == "B":
-                # Cycle mood
                 moods = ["calm", "sparkle", "curious", "playful"]
                 next_mood = moods[(moods.index(STATE["mood"]) + 1) % len(moods)]
                 STATE["mood"] = next_mood
@@ -171,4 +191,7 @@ def run_companion_session():
 
 
 if __name__ == "__main__":
-    run_companion_session()
+    if len(sys.argv) > 1:
+        handle_direct_message(sys.argv[1:])
+    else:
+        run_companion_session()

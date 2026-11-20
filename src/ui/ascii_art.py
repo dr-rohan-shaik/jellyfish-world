@@ -152,7 +152,7 @@ def render_jellyfish_card(
     is_founder: bool = False,
     equipped: Optional[List[CosmeticItem]] = None,
     speech: Optional[str] = None,
-    hint: str = "hey jellyfish ...",
+    hint: str = "jellyfish <message>",
     terminal_width: int = 80,
     terminal_height: int = 24,
 ) -> Panel:
