@@ -70,6 +70,7 @@ def chat_loop(console: Console, jelly_name: str, mood: str) -> None:
 
 def run_companion_session() -> None:
     """Run interactive terminal companion loop."""
+    # Force UTF-8 for emoji support on Windows
     console = Console(theme=get_theme())
     catalog = load_cosmetics_catalog()
     crown = catalog.get("crown")
@@ -99,14 +100,20 @@ def run_companion_session() -> None:
 
         console.print(card)
 
-        # Options Menu
-        console.print(Panel(
+        # Display Agent Watcher Table above the menu
+        console.print(render_agent_watcher_table())
+
+        # Clear the option for watching agents in the menu
+        menu_options = (
             f"[bold {Palette.CYAN}][1][/] 💬 Chat with {STATE['name']} (Interactive chat mode)\n"
-            f"[bold {Palette.CYAN}][2][/] 🔭 Watch Other Agents (Live Claude Code, OpenCode, Hermes feed)\n"
+            f"[bold {Palette.CYAN}][2][/] [dim]🔭 Watch Other Agents (Live Claude Code, OpenCode, Hermes feed)[/dim] (Displayed above)\n"
             f"[bold {Palette.CYAN}][3][/] 🎯 Work Options & Decisions (Calm choices for current tasks)\n"
             f"[bold {Palette.CYAN}][4][/] ✨ Feed Light (Daily Tap)\n"
             f"[bold {Palette.CYAN}][5][/] 🪟 Dock to Sidepane (Float beside your editor)\n"
-            f"[bold {Palette.CYAN}][q][/] 🌊 Return peacefully to shell",
+            f"[bold {Palette.CYAN}][q][/] 🌊 Return peacefully to shell"
+        )
+        console.print(Panel(
+            menu_options,
             title="Calm Companion Menu",
             border_style=Palette.MID_BLUE,
             width=min(cols - 2, 56),
@@ -130,12 +137,6 @@ def run_companion_session() -> None:
         elif choice == "1":
             chat_loop(console, STATE["name"], STATE["mood"])
 
-        # 2. Watch Other Agents
-        elif choice == "2":
-            table = render_agent_watcher_table()
-            console.print(table)
-            console.print("\n[dim]External agents (Claude Code, OpenCode, Hermes, DeepSeek) report here via MCP.[/dim]")
-            input("\nPress Enter to return to menu...")
 
         # 3. Work Options & Decisions
         elif choice == "3":
@@ -189,8 +190,13 @@ def run_companion_session() -> None:
             input("Press Enter to continue...")
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Main entry point for the jellyfish command."""
     if len(sys.argv) > 1:
         handle_direct_message(sys.argv[1:])
     else:
         run_companion_session()
+
+
+if __name__ == "__main__":
+    main()

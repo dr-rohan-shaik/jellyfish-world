@@ -1,0 +1,34 @@
+1:"$Sreact.fragment"
+2:I[7121,[],""]
+3:I[4581,[],""]
+b:I[484,[],"OutletBoundary"]
+c:"$Sreact.suspense"
+10:"ViewportBoundary"
+11:I[484,[],"$10"]
+12:"MetadataBoundary"
+13:I[484,[],"$12"]
+14:I[6869,[],"IconMark"]
+:HL["/_next/static/css/a3fb493ae3ac2805.css","style"]
+5:X
+5:C
+6:X
+6:300
+6:C
+9:X
+9:C
+f:X
+f:C
+a:[["children",{"s":"__PAGE__","h":49314,"d":{"r":["$","$1","c",{"children":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],null,["$","$Lb",null,{"children":["$","$c",null,{"name":"Next.MetadataOutlet","children":"$@d"}]}]]}],"p":"$@e","v":"$f","s":"$6"}}]]
+7:[["children",{"s":"_not-found","h":49250,"d":{"r":["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","template":["$","$L3",null,{}]}]]}],"p":"$@8","v":"$9","s":"$6"},"c":"$Qa"}]]
+16:X
+16:C
+19:X
+19:C
+0:{"t":{"t":{"s":"","h":49234,"d":{"r":["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/a3fb493ae3ac2805.css","precedence":"next"}]],["$","html",null,{"lang":"en","className":"h-full antialiased","children":["$","body",null,{"className":"min-h-full flex flex-col","children":["$","$L2",null,{"parallelRouterKey":"children","template":["$","$L3",null,{}]}]}]}]]}],"p":"$@4","v":"$5","s":"$6"},"c":"$Q7"},"h":{"r":["$","$1","h",{"children":[["$","meta",null,{"name":"robots","content":"noindex"}],["$","$L11",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]}],["$","$L13",null,{"children":[["$","div",null,{"hidden":true,"children":["$","$c",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"Jellyfish World"}],["$","meta","1",{"name":"description","content":"One AI jellyfish per verified email. Floating in the shared ocean, answering when called."}],["$","link","2",{"rel":"icon","href":"/favicon.ico?7161ee1d105bc9c7","type":"image/x-icon","sizes":"48x48"}],["$","link","3",{"rel":"icon","href":"/favicon.ico"}],["$","$L14","4",{}]]}]}],null]}],null]}],"p":"$@15","v":"$16","s":"$6"}},"a":"$@17","u":"$@18","b":"wJksIg6Xa87fS3ImS14Q8","r":"$19"}
+d:null
+18:false
+17:null
+8:"$undefined"
+4:"$undefined"
+15:"$undefined"
+e:"$undefined"
