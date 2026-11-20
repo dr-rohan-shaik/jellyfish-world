@@ -1,0 +1,8 @@
+{
+  "id": "glow_ring",
+  "name": "Glow Ring",
+  "slot": "glow_ring",
+  "description": "A floating ring of bioluminescent light particles around the bell rim.",
+  "type": "ring_layer",
+  "rim_brackets": [":·* ", " *·:"]
+}

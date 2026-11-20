@@ -1,0 +1,11 @@
+{
+  "id": "glasses",
+  "name": "Round Glasses",
+  "slot": "glasses",
+  "description": "Round wire-rim spectacles that rest over curious eyes.",
+  "type": "eye_layer",
+  "replacements": {
+    "o o": "(o)-(o)",
+    "o   o": "(o)---(o)"
+  }
+}

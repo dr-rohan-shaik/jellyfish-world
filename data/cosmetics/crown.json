@@ -1,0 +1,8 @@
+{
+  "id": "crown",
+  "name": "Crown",
+  "slot": "hat",
+  "description": "A soft golden crown resting gently on the bell.",
+  "type": "hat_layer",
+  "line": "      \\_v_v_/      "
+}
