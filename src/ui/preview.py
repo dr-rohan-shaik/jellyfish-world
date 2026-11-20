@@ -37,8 +37,17 @@ def run_preview(
     interval: float = 0.25,
     force_compact: bool = False,
     founder_demo: bool = True,
+    interactive: bool = True,
 ) -> None:
-    """Run interactive design preview."""
+    """Run design preview.
+
+    Args:
+        cycles: Number of demo cycles (0 = infinite)
+        interval: Seconds per frame
+        force_compact: Force 40x20 viewport
+        founder_demo: Show founder variations
+        interactive: If False, runs silently without user input
+    """
     console = Console(theme=get_theme())
     catalog = load_cosmetics_catalog()
 
@@ -75,16 +84,16 @@ def run_preview(
                         is_founder=bool(curr["founder"]),
                         equipped=[i for i in curr["items"] if i is not None],
                         speech=speech,
-                        hint="hey jellyfish how are you?",
+                        hint="hey jellyfish how are you?" if interactive else "",
                         terminal_width=cols,
                         terminal_height=rows,
                     )
 
                     header = Text("~ JELLYFISH WORLD — DESIGN PREVIEW ~", style=f"bold {Palette.CYAN}")
-                    footer = Text(
-                        f"Terminal Size: {cols}x{rows} | Frame: {frame_idx}/3 | Ctrl+C to stop",
-                        style="dim",
-                    )
+                    footer_content = f"Terminal Size: {cols}x{rows} | Frame: {frame_idx}/3"
+                    if interactive:
+                        footer_content += " | Ctrl+C to stop"
+                    footer = Text(footer_content, style="dim")
 
                     layout = Layout()
                     layout.split_column(
@@ -102,9 +111,12 @@ def run_preview(
                 if cycles > 0 and cycle_count >= cycles:
                     break
     except KeyboardInterrupt:
-        pass
+        if interactive:
+            console.print("\n[bold cyan]Preview concluded peacefully.[/bold cyan]\n")
 
-    console.print("\n[bold cyan]Preview concluded peacefully.[/bold cyan]\n")
+    # Silent completion for non-interactive mode
+    if not interactive:
+        console.print("[cyan]✓ Jellyfish is drifting below the line...[/cyan]")
 
 
 def main() -> None:
@@ -113,6 +125,7 @@ def main() -> None:
     parser.add_argument("--interval", type=float, default=0.25, help="Seconds per frame (default: 0.25)")
     parser.add_argument("--compact", action="store_true", help="Force 40x20 compact mobile viewport")
     parser.add_argument("--no-founder", action="store_true", help="Disable founder demo")
+    parser.add_argument("--silent", "-s", action="store_true", help="Run silently without interactive prompts")
     args = parser.parse_args()
 
     run_preview(
@@ -120,6 +133,7 @@ def main() -> None:
         interval=args.interval,
         force_compact=args.compact,
         founder_demo=not args.no_founder,
+        interactive=not args.silent,
     )
 
 

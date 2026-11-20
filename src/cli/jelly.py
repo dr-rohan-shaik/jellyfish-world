@@ -68,6 +68,7 @@ def main():
     # home preview
     home_p = subparsers.add_parser("home", help="Open live floating jellyfish view")
     home_p.add_argument("--cycles", type=int, default=0, help="Cycles to run (0 = infinite)")
+    home_p.add_argument("--silent", "-s", action="store_true", help="Run silently without interactive prompts")
 
     # gitpush command
     gitpush_p = subparsers.add_parser("gitpush", help="Commit and push changes with a calm message")
@@ -120,7 +121,7 @@ def main():
 
     elif args.command == "home":
         from src.ui.preview import run_preview
-        run_preview(cycles=args.cycles)
+        run_preview(cycles=args.cycles, interactive=not(args.silent))
 
     elif args.command == "gitpush":
         from src.cli.gitpush import run_gitpush
