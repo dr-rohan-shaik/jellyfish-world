@@ -70,6 +70,11 @@ def main():
     home_p.add_argument("--cycles", type=int, default=0, help="Cycles to run (0 = infinite)")
     home_p.add_argument("--silent", "-s", action="store_true", help="Run silently without interactive prompts")
 
+    # drift command - continuous background display
+    drift_p = subparsers.add_parser("drift", help="Run jellyfish continuously below the line (24/7)")
+    drift_p.add_argument("--interval", type=float, default=0.25, help="Seconds per frame (default: 0.25)")
+    drift_p.add_argument("--compact", action="store_true", help="Force 40x20 compact viewport")
+
     # gitpush command
     gitpush_p = subparsers.add_parser("gitpush", help="Commit and push changes with a calm message")
     gitpush_p.add_argument("-m", "--message", type=str, help="Commit message (optional, will generate one if not provided)")
@@ -122,6 +127,16 @@ def main():
     elif args.command == "home":
         from src.ui.preview import run_preview
         run_preview(cycles=args.cycles, interactive=not(args.silent))
+
+    elif args.command == "drift":
+        from src.ui.preview import run_preview
+        run_preview(
+            cycles=0,
+            interval=args.interval,
+            force_compact=args.compact,
+            founder_demo=True,
+            interactive=False,
+        )
 
     elif args.command == "gitpush":
         from src.cli.gitpush import run_gitpush
