@@ -14,7 +14,8 @@ from __future__ import annotations
 import logging
 import os
 import sys
-from typing import Optional
+from pathlib import Path
+from typing import Any
 
 from src.ai.anti_hallucination import (
     AntiHallucinationGuard,
@@ -33,11 +34,12 @@ if not _logger.handlers:
     _logger.setLevel(logging.WARNING)
 
 # Global personalization profile (loaded once)
-_personalization: Optional[dict] = None
-_anti_hallucination: Optional[AntiHallucinationGuard] = None
+_personalization: dict | None = None
+_anti_hallucination: AntiHallucinationGuard | None = None
+_local_llm_client: Any = None
 
 
-def _get_personalization() -> Optional[dict]:
+def _get_personalization() -> dict | None:
     """Load and cache personalization profile from environment or files."""
     global _personalization
     if _personalization is not None:
@@ -58,7 +60,7 @@ def _get_personalization() -> Optional[dict]:
     if personalization_dir:
         try:
             builder = PersonalizationBuilder()
-            builder.add_file(personalization_dir)
+            builder.add_file(Path(personalization_dir))
             _personalization = builder.build("user")
             _logger.info("Loaded personalization profile: %d samples", _personalization.get("sample_count", 0))
         except Exception as e:
@@ -75,16 +77,14 @@ def _get_anti_hallucination() -> AntiHallucinationGuard:
     return _anti_hallucination
 
 
-def _apply_personalization(message: str, profile: Optional[dict], jellyfish_name: str) -> str:
+def _apply_personalization(message: str, profile: dict | None, jellyfish_name: str) -> str:
     """Apply personality style from profile to message/response."""
     if not profile or not profile.get("vocabulary"):
         return message
 
-    # Inject style hints based on vocabulary
-    vocab = profile.get("vocabulary", {})
-    top_terms = list(vocab.keys())[:5]
+    # Inject style hints based on vocabulary (handled in local_llm if available)
+    _ = profile.get("vocabulary", {})
 
-    # Gentle personalization - add style cues to system prompt (handled in local_llm if available)
     return message
 
 
@@ -196,19 +196,22 @@ def query_jellyfish_ai(
     local_provider = os.environ.get("AI_PROVIDER", "").lower()
     if local_provider in ("local", "ollama", "lm_studio", "llama_cpp"):
         try:
-            from src.ai.local_llm import LocalLLMClient, LLMConfig
+                from src.ai.local_llm import LLMConfig, LocalLLMBackend, LocalLLMClient
 
-            api_key_or_not = os.environ.get("OPENAI_API_KEY", "")
-            if not api_key_or_not:  # Only use local if no BYOK key
-                config = LLMConfig(
-                    backend=local_provider if local_provider != "local" else "auto",
-                    model_name=os.environ.get("LOCAL_LLM_MODEL", "qwen2.5-7b-instruct"),
-                    model_path=os.environ.get("LOCAL_LLM_MODEL_PATH", ""),
-                    temperature=0.3,
-                )
-                client = LocalLLMClient(config, profile)
-                if client.health_check():
-                    response = client.generate(personalized_message, jellyfish_name, mood)
+                # Ensure we don't re-instantiate client if already exists and is healthy
+                global _local_llm_client
+                if '_local_llm_client' not in globals() or not _local_llm_client.health_check():
+                    backend_val = local_provider if local_provider != "local" else "auto"
+                    config = LLMConfig(
+                        backend=LocalLLMBackend(backend_val) if backend_val != "auto" else LocalLLMBackend.AUTO,
+                        model_name=os.environ.get("LOCAL_LLM_MODEL", "qwen2.5-7b-instruct"),
+                        model_path=os.environ.get("LOCAL_LLM_MODEL_PATH", ""),
+                        temperature=0.3,
+                    )
+                    _local_llm_client = LocalLLMClient(config, profile)
+
+                if _local_llm_client.health_check():
+                    response = _local_llm_client.generate(personalized_message, jellyfish_name, mood)
                     filtered = _check_hallucination(response)
                     if filtered:
                         return filtered

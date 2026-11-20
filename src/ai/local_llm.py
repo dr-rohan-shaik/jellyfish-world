@@ -7,16 +7,12 @@ Supports fully offline 7B+ models with:
 """
 from __future__ import annotations
 
-import hashlib
-import json
-import os
 import subprocess
-import sys
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 
 class LocalLLMBackend(Enum):
@@ -32,13 +28,13 @@ class LocalLLMBackend(Enum):
 class PersonalizationProfile:
     """Frozen profile for immutable style data."""
     name: str
-    vocabulary: Dict[str, int] = field(default_factory=dict)
+    vocabulary: dict[str, int] = field(default_factory=dict)
     formality_level: str = "neutral"
     sample_count: int = 0
-    informal_markers: Tuple[str, ...] = field(default_factory=tuple)
-    formality_markers: Tuple[str, ...] = field(default_factory=tuple)
+    informal_markers: tuple[str, ...] = field(default_factory=tuple)
+    formality_markers: tuple[str, ...] = field(default_factory=tuple)
 
-    def to_few_shot_examples(self, max_examples: int = 3) -> List[Dict[str, str]]:
+    def to_few_shot_examples(self, max_examples: int = 3) -> list[dict[str, str]]:
         """Convert profile to few-shot examples for the model."""
         if not self.sample_count:
             return []
@@ -82,7 +78,7 @@ class LLMConfig:
         # Check LM Studio API
         try:
             with _httpx_context() as httpx:
-                resp = httpx.get(f"http://localhost:1234/v1/models", timeout=2.0)
+                resp = httpx.get("http://localhost:1234/v1/models", timeout=2.0)
                 if resp.status_code == 200:
                     return LocalLLMBackend.LM_STUDIO
         except Exception:
@@ -101,8 +97,8 @@ def _httpx_context():
     try:
         import httpx
         yield httpx
-    except ImportError:
-        raise ImportError("httpx is required for local LLM support. Install with: pip install httpx>=0.27.0")
+    except ImportError as err:
+        raise ImportError("httpx is required for local LLM support. Install with: pip install httpx>=0.27.0") from err
 
 
 class LocalLLMClient:
@@ -111,7 +107,7 @@ class LocalLLMClient:
     def __init__(
         self,
         config: LLMConfig,
-        profile: Optional[Dict[str, Any]] = None,
+        profile: dict[str, Any] | None = None,
     ) -> None:
         self.config = config
         self.profile = PersonalizationProfile(
@@ -138,15 +134,15 @@ class LocalLLMClient:
             with _httpx_context() as httpx:
                 if self._backend == LocalLLMBackend.OLLAMA:
                     resp = httpx.get("http://localhost:11434/api/tags", timeout=3.0)
-                    return resp.status_code == 200
+                    return bool(resp.status_code == 200)
                 elif self._backend == LocalLLMBackend.LM_STUDIO:
                     resp = httpx.get("http://localhost:1234/v1/models", timeout=3.0)
-                    return resp.status_code == 200
+                    return bool(resp.status_code == 200)
                 elif self._backend == LocalLLMBackend.LLAMA_CPP:
                     if self.config.model_path:
                         return Path(self.config.model_path).exists()
                     resp = httpx.get("http://localhost:8080/health", timeout=3.0)
-                    return resp.status_code == 200
+                    return bool(resp.status_code == 200)
         except Exception:
             pass
         return False
@@ -206,7 +202,7 @@ class LocalLLMClient:
             resp = httpx.post("http://localhost:11434/api/chat", json=payload, timeout=30.0)
             resp.raise_for_status()
             data = resp.json()
-            return data["message"]["content"].strip()
+            return str(data["message"]["content"]).strip()
 
     def _generate_lm_studio(self, message: str, jellyfish_name: str, mood: str) -> str:
         """Generate via LM Studio OpenAI-compatible API."""
@@ -230,7 +226,7 @@ class LocalLLMClient:
             )
             resp.raise_for_status()
             data = resp.json()
-            return data["choices"][0]["message"]["content"].strip()
+            return str(data["choices"][0]["message"]["content"]).strip()
 
     def _generate_llama_cpp(self, message: str, jellyfish_name: str, mood: str) -> str:
         """Generate via llama.cpp server or CLI."""
@@ -264,7 +260,7 @@ class LocalLLMClient:
             )
             resp.raise_for_status()
             data = resp.json()
-            return data["choices"][0]["message"]["content"].strip()
+            return str(data["choices"][0]["message"]["content"]).strip()
 
     def _generate_llama_cpp_cli(self, message: str, jellyfish_name: str, mood: str) -> str:
         """Generate via llama.cpp CLI."""
@@ -293,7 +289,7 @@ class LocalLLMClient:
 
         return output
 
-    def get_backend_info(self) -> Dict[str, Any]:
+    def get_backend_info(self) -> dict[str, Any]:
         """Get information about the active backend."""
         return {
             "backend": self._backend.value,
