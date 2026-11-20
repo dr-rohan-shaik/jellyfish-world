@@ -19,7 +19,6 @@ if _repo_root not in sys.path:
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
-from rich.prompt import Prompt
 
 from src.core.cosmetics import load_cosmetics_catalog
 from src.ui.ascii_art import render_jellyfish_card
@@ -28,6 +27,28 @@ from src.companion.agent_watcher import render_agent_watcher_table, record_agent
 from src.companion.work_context import generate_work_options
 from src.companion.chat import respond_to_owner
 from src.bridge.mcp_server import STATE
+
+
+def chat_loop(console: Console, jelly_name: str, mood: str):
+    """Interactive continuous chat mode."""
+    console.print(Panel(
+        f"[bold {Palette.CYAN}]💬 Whispering to {jelly_name}...[/bold {Palette.CYAN}]\n"
+        f"[dim]Type your message and press Enter. Type 'back' or press Enter on empty line to return to menu.[/dim]",
+        border_style=Palette.CYAN,
+    ))
+
+    while True:
+        try:
+            msg = input(f"\nYou > ").strip()
+        except (KeyboardInterrupt, EOFError):
+            break
+
+        if not msg or msg.lower() in ("back", "exit", "menu", "q"):
+            break
+
+        reply = respond_to_owner(msg, jelly_name, mood)
+        founder_tag = f" [bold {Palette.GOLD}](#00001 ★ FOUNDER)[/]" if STATE["is_founder"] else ""
+        console.print(f"[bold {Palette.ELECTRIC_CYAN}]{jelly_name}[/]{founder_tag}: [italic {Palette.WHITE}]{reply.replace(jelly_name + ': ', '')}[/]")
 
 
 def run_companion_session():
@@ -51,17 +72,16 @@ def run_companion_session():
             is_founder=STATE["is_founder"],
             equipped=[crown] if crown else [],
             speech=speech_msg,
-            hint="type a command or option number below",
+            hint="type 1 to chat, 2 to watch agents, or type a message directly",
             terminal_width=cols,
             terminal_height=rows,
         )
 
-        console.clear()
         console.print(card)
 
         # Options Menu
         console.print(Panel(
-            f"[bold {Palette.CYAN}][1][/] 💬 Chat with {STATE['name']} (`hey jellyfish <message>`)\n"
+            f"[bold {Palette.CYAN}][1][/] 💬 Chat with {STATE['name']} (Interactive chat mode)\n"
             f"[bold {Palette.CYAN}][2][/] 🔭 Watch Other Agents (Live Claude Code, OpenCode, Hermes feed)\n"
             f"[bold {Palette.CYAN}][3][/] 🎯 Work Options & Decisions (Calm choices for current tasks)\n"
             f"[bold {Palette.CYAN}][4][/] ✨ Feed Light (Daily Tap)\n"
@@ -69,7 +89,7 @@ def run_companion_session():
             f"[bold {Palette.CYAN}][q][/] 🌊 Return peacefully to shell",
             title="Calm Companion Menu",
             border_style=Palette.MID_BLUE,
-            width=min(cols - 2, 52),
+            width=min(cols - 2, 56),
         ))
 
         try:
@@ -86,27 +106,20 @@ def run_companion_session():
             console.print("\n[dim]Aurelia drifts gently back into the ocean depths. See you soon![/dim]\n")
             break
 
-        # 1. Chat
-        elif choice == "1" or choice.lower().startswith("hey"):
-            msg = choice if choice.lower().startswith("hey") else input("Your message: ").strip()
-            if msg:
-                reply = respond_to_owner(msg, STATE["name"], STATE["mood"])
-                speech_msg = reply
-                # Animate a little
-                frame_idx = (frame_idx + 1) % 4
+        # 1. Chat Mode
+        elif choice == "1":
+            chat_loop(console, STATE["name"], STATE["mood"])
 
         # 2. Watch Other Agents
         elif choice == "2":
             table = render_agent_watcher_table()
-            console.clear()
             console.print(table)
             console.print("\n[dim]External agents (Claude Code, OpenCode, Hermes, DeepSeek) report here via MCP.[/dim]")
-            input("\nPress Enter to return...")
+            input("\nPress Enter to return to menu...")
 
         # 3. Work Options & Decisions
         elif choice == "3":
             options = generate_work_options()
-            console.clear()
             console.print(Panel(
                 f"[bold {Palette.GOLD}]Calm Guidance for Current Work:[/bold {Palette.GOLD}]\n\n" +
                 "\n".join([f"[bold cyan]{o['letter']}.[/bold cyan] [bold]{o['title']}:[/bold] {o['desc']}" for o in options]),
@@ -129,7 +142,9 @@ def run_companion_session():
         elif choice == "4":
             STATE["tap_count"] += 1
             STATE["mood"] = "sparkle"
+            console.print(f"\n[bold {Palette.PINK}]✨ You fed light to {STATE['name']}. Its bell glows warm pink! (Total taps: {STATE['tap_count']})[/]\n")
             speech_msg = f"Thank you for feeding me light! Total taps: {STATE['tap_count']} ✨"
+            time.sleep(1.2)
 
         # 5. Dock to Sidepane
         elif choice == "5":
@@ -139,14 +154,20 @@ def run_companion_session():
             ok, msg = open_sidepane(py_path, cli_path)
             if ok:
                 speech_msg = "I've floated over into your Windows Terminal sidepane!"
+                console.print(f"[green]✓ Opened sidepane.[/green]")
             else:
                 speech_msg = f"Could not spawn sidepane: {msg}"
+                console.print(f"[red]✗ {msg}[/red]")
+            time.sleep(1.0)
 
         else:
-            # Treat direct text as a chat message
+            # Direct chat input right from menu
             reply = respond_to_owner(choice, STATE["name"], STATE["mood"])
+            founder_tag = f" [bold {Palette.GOLD}](#00001 ★ FOUNDER)[/]" if STATE["is_founder"] else ""
+            console.print(f"\n[bold {Palette.ELECTRIC_CYAN}]{STATE['name']}[/]{founder_tag}: [italic {Palette.WHITE}]{reply.replace(STATE['name'] + ': ', '')}[/]\n")
             speech_msg = reply
             frame_idx = (frame_idx + 1) % 4
+            input("Press Enter to continue...")
 
 
 if __name__ == "__main__":
