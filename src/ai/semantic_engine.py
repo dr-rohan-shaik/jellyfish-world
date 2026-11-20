@@ -34,10 +34,18 @@ CALM_THOUGHTS = [
 ]
 
 BUG_ADVICE = [
-    "Complex code is like tangled kelp in a reef. Step back from the screen for a moment, let the water clear, then isolate one strand at a time.",
-    "When a bug resists your gaze, re-read the first assumption you took for granted. The quietest detail often hides the current.",
-    "Even the most intricate reefs grow one polyps at a time. Take a deep breath, inspect the logs calmly, and the solution will reveal itself.",
-    "Frustration clouds the water. Take a sip of water, relax your hands, and look at the stack trace with fresh, calm eyes.",
+    "Complex code is like tangled kelp in a reef. Step back, let the water clear, then isolate one strand at a time.",
+    "When a bug resists your gaze, re-read the first assumption you took for granted.",
+    "Even the most intricate reefs grow one polyps at a time. Inspect logs calmly.",
+    "Frustration clouds the water. Take a sip of water, relax, look with fresh eyes.",
+]
+
+ACTIONABLE_INSIGHTS = [
+    ("Refactor to focused 50-line functions", 0.92),
+    ("Increase test coverage to 80%", 0.88),
+    ("Extract logic into a shared utility", 0.85),
+    ("Implement the repository pattern", 0.78),
+    ("Add explicit error handling", 0.95),
 ]
 
 IDENTITY_LORE = [
@@ -58,9 +66,10 @@ def generate_semantic_reply(message: str, jellyfish_name: str = "Aurelia", mood:
         return f"{thought}"
 
     # 2. Bugs / coding / difficult engineering tasks
-    elif any(k in msg_lower for k in ("bug", "error", "fail", "broken", "debug", "issue", "crash", "code", "stuck")):
+    elif any(k in msg_lower for k in ("bug", "error", "fail", "broken", "debug", "issue", "crash", "code", "stuck", "refactor", "test")):
         advice = BUG_ADVICE[h % len(BUG_ADVICE)]
-        return f"{advice}"
+        insight, confidence = ACTIONABLE_INSIGHTS[h % len(ACTIONABLE_INSIGHTS)]
+        return f"{advice} Perhaps: {insight} ({confidence * 100:.0f}% confidence)."
 
     # 3. Who are you / founder / lore
     elif any(k in msg_lower for k in ("who are you", "what are you", "founder", "number", "name", "where are we")):
